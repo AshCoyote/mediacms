@@ -21,4 +21,5 @@ export * from './ProfileSharedByMePage';
 export * from './ProfileSharedWithMePage';
 export * from './RecommendedMediaPage';
 export * from './SearchPage';
+export * from './ShortsPage';
 export * from './TagsPage';

@@ -84,6 +84,15 @@ to the repo's own `docker-compose-dev.yaml` usage too.
   bundle is not what the preview shows.
 - Runtime artifacts are gitignored and safe to delete: `.secret_key`, `cms/local_settings.py`,
   `static_collected/`, `media_files/`, `logs/`.
+- A new page bundle needs `docker compose -f docker-compose.base44.yml restart frontend`: the
+  webpack `entry` map is read from `frontend/src/entries/` once at dev-server startup, so a new
+  `entries/*.js` file (e.g. `shorts.js`) is not compiled until the service restarts.
+- The `Media` post_save signal calls `media_init()` (media type, thumbnail, encode), so a Media
+  row must be saved with `media_file` already attached — `Media.objects.create()` without a file
+  raises `ValueError: The 'media_file' attribute has no file associated with it`.
+- Shorts: `Media.media_format` (`long`/`short`) separates vertical shorts from regular media. The
+  media list API hides `short` items unless `?media_format=short` is passed, which is what the
+  `/shorts` feed and the homepage Shorts row request.
 
 ## Verifying changes
 

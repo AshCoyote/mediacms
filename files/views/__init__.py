@@ -43,6 +43,7 @@ from .pages import record_screen  # noqa: F401
 from .pages import replace_media  # noqa: F401
 from .pages import search  # noqa: F401
 from .pages import setlanguage  # noqa: F401
+from .pages import shorts_media  # noqa: F401
 from .pages import sitemap  # noqa: F401
 from .pages import tags  # noqa: F401
 from .pages import tos  # noqa: F401

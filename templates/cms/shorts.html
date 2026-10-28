@@ -11,12 +11,12 @@
 {% endblock headermeta %}
 
 {% block topimports %}
+<link href="{% static "css/shorts.css" %}" rel="stylesheet">
 <link href="{% static "video_js/video-js.css" %}?v={{ VERSION }}" rel="stylesheet">
 {% endblock topimports %}
 
 {% block content %}<div id="page-shorts" class="shorts-page-root"></div>{% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "video_js/video-js.js" %}?v={{ VERSION }}"></script>
 <script src="{% static "js/shorts.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

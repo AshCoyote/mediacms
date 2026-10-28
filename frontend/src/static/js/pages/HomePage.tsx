@@ -47,9 +47,14 @@ export const HomePage: React.FC<HomePageProps> = ({
   recommended_view_all_link = true,
 }) => {
   const [zeroMedia, setZeroMedia] = useState(false);
+  const [visibleShorts, setVisibleShorts] = useState(false);
   const [visibleLatest, setVisibleLatest] = useState(false);
   const [visibleFeatured, setVisibleFeatured] = useState(false);
   const [visibleRecommended, setVisibleRecommended] = useState(false);
+
+  const onLoadShorts = (length: number) => {
+    setVisibleShorts(0 < length);
+  };
 
   const onLoadLatest = (length: number) => {
     setVisibleLatest(0 < length);
@@ -71,6 +76,20 @@ export const HomePage: React.FC<HomePageProps> = ({
           <ApiUrlConsumer>
             {(apiUrl) => (
               <MediaMultiListWrapper className="items-list-ver">
+                <MediaListRow
+                  title={translateString('Shorts')}
+                  style={!visibleShorts ? { display: 'none' } : undefined}
+                  viewAllLink={links.shorts}
+                >
+                  <InlineSliderItemListAsync
+                    requestUrl={apiUrl.media + '?media_format=short'}
+                    itemsCountCallback={onLoadShorts}
+                    hideViews={!PageStore.get('config-media-item').displayViews}
+                    hideAuthor={!PageStore.get('config-media-item').displayAuthor}
+                    hideDate={!PageStore.get('config-media-item').displayPublishDate}
+                  />
+                </MediaListRow>
+
                 {PageStore.get('config-enabled').pages.featured &&
                   PageStore.get('config-enabled').pages.featured.enabled && (
                     <MediaListRow

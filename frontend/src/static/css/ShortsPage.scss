@@ -1,0 +1,286 @@
+/* Vertical, snap-scrolling short video feed. A dark stage keeps the video and
+   its white overlay text readable in both site themes. */
+.shorts-feed {
+  position: relative;
+  height: calc(100vh - var(--header-height, 56px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  background-color: #000;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.shorts-slide-wrap {
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.shorts-slide {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #000;
+
+  .shorts-video-wrap {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    video,
+    .shorts-poster {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+      background-color: #000;
+    }
+  }
+
+  /* Narrow viewports get the familiar vertical, cropped stage. */
+  @media screen and (max-width: 768px) {
+    .shorts-video-wrap video,
+    .shorts-video-wrap .shorts-poster {
+      object-fit: cover;
+    }
+  }
+}
+
+.shorts-slide-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.15);
+
+  .material-icons {
+    width: 68px;
+    height: 68px;
+    line-height: 68px;
+    font-size: 42px;
+    color: #fff;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+.shorts-sound-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.5);
+
+  .material-icons {
+    font-size: 22px;
+  }
+}
+
+.shorts-actions {
+  position: absolute;
+  right: 16px;
+  bottom: 88px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+
+  .shorts-author img {
+    width: 44px;
+    height: 44px;
+    display: block;
+    object-fit: cover;
+    border: 2px solid #fff;
+    border-radius: 0;
+    background-color: #222;
+  }
+
+  .shorts-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+    background: transparent;
+    font-size: 12px;
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+
+    .material-icons {
+      font-size: 28px;
+    }
+
+    &.active {
+      color: #ff4d4d;
+    }
+  }
+}
+
+.shorts-caption {
+  position: absolute;
+  left: 0;
+  right: 88px;
+  bottom: 0;
+  z-index: 2;
+  padding: 60px 16px 20px;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+
+  .shorts-caption-author {
+    font-weight: bold;
+    color: #fff;
+    text-decoration: none;
+  }
+
+  p {
+    margin: 6px 0;
+    max-height: 4.5em;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .shorts-views {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+}
+
+.shorts-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #fff;
+  font-size: 15px;
+}
+
+.shorts-comments-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.shorts-comments-panel {
+  position: relative;
+  width: 100%;
+  max-height: 60%;
+  padding: 20px 16px;
+  overflow-y: auto;
+  color: var(--body-text-color);
+  background-color: var(--body-bg-color);
+  border-radius: 12px 12px 0 0;
+
+  .shorts-comments-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px;
+    border: 0;
+    cursor: pointer;
+    color: var(--body-text-color);
+    background: transparent;
+  }
+}
+
+.shorts-comments {
+  h4 {
+    margin: 0 0 12px;
+    font-size: 15px;
+  }
+}
+
+.shorts-comment-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    color: var(--input-color);
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--input-border-color);
+    border-radius: 6px;
+  }
+
+  button {
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #fff;
+    background-color: #1f2937;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+}
+
+.shorts-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shorts-comment {
+  display: flex;
+  gap: 10px;
+
+  img {
+    width: 34px;
+    height: 34px;
+    object-fit: cover;
+    border-radius: 0;
+    background-color: #222;
+  }
+
+  .shorts-comment-author {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--body-text-color);
+  }
+
+  p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    word-break: break-word;
+  }
+}
+
+.shorts-comments-empty {
+  font-size: 13px;
+  opacity: 0.7;
+}
