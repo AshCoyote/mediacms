@@ -68,9 +68,10 @@ services:
       ENABLE_CELERY_BEAT: "no"
       ENABLE_CELERY_SHORT: "no"
       ENABLE_CELERY_LONG: "no"
-      ADMIN_USER: admin
-      ADMIN_EMAIL: admin@localhost
-      ADMIN_PASSWORD: admin
+      # Dev-only superuser created on a fresh database (see AGENTS.md).
+      ADMIN_USER: Admin
+      ADMIN_EMAIL: Admin
+      ADMIN_PASSWORD: 4upocx0v
     depends_on:
       db:
         condition: service_healthy

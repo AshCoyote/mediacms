@@ -29,7 +29,9 @@ Image: built once from the repo's own `Dockerfile` target `base` (dev build) as
 bind mount. The `frontend` service uses plain `node:24` and installs its dependencies into
 the `frontend_node_modules` volume on start.
 
-Admin user: **admin / admin** (dev only; set by `ADMIN_PASSWORD` in the compose file).
+Admin user: **Admin / 4upocx0v** (dev only). The `migrations` service creates it from
+`ADMIN_USER` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` in the compose file, and only when the
+database has no users yet, so re-running `up` never resets an existing password.
 
 Nothing here needs an external credential: postgres/redis/admin are local and
 `deploy/docker/entrypoint.sh` writes `SECRET_KEY` to `.secret_key` on first start.
