@@ -19,7 +19,7 @@ and runs the app's development commands live.
 | service | what it does |
 | --- | --- |
 | `frontend` | webpack dev server on host **3000** (the preview entry). Serves `static/js|css` from the live build and proxies every other request to Django, so the whole app is one origin — sessions, CSRF and media work without CORS. |
-| `web` | Django dev server (`runserver`, auto-reload) inside the container on port 80, exposed on host **8000** (admin `/admin/`, API docs `/swagger/`). |
+| `web` | Django dev server (`runserver`, auto-reload) inside the container on port 80, exposed on host **8000** (admin `/admin/`, API docs `/swagger/`). It runs `manage.py migrate` before starting, so a migration added to an already-running stack is applied on restart instead of leaving the model without its table. |
 | `celery_worker` | one Celery worker on both `short_tasks,long_tasks` queues (upload/encoding/state checks). |
 | `migrations` | one-shot: migrate, load `fixtures/`, create the admin user, `collectstatic`. Re-runs on every `up` and is idempotent. |
 | `db`, `redis` | postgres (`db_data` volume) and redis. |

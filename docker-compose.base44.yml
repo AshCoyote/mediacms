@@ -92,7 +92,13 @@ services:
       base44.kind: api
       base44.port: "8000"
       base44.docs: "/swagger/"
-    command: ["python", "manage.py", "runserver", "0.0.0.0:80"]
+    # Applies any migration added since the last boot: the `migrations` one-shot
+    # only runs on `up`, so a model added to a running stack would otherwise never
+    # get its table (admin_customizations_sitebranding hit exactly that).
+    command:
+      - sh
+      - -ec
+      - python manage.py migrate --noinput && exec python manage.py runserver 0.0.0.0:80
     ports:
       - "8000:80"
     environment:
