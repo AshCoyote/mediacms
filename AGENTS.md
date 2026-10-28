@@ -38,16 +38,20 @@ Nothing here needs an external credential: postgres/redis/admin are local and
 
 The preview proxy terminates TLS and forwards the browser's `Origin`
 (`https://<port>-<BASE44_PUBLIC_HOST_SUFFIX>`) unchanged, while the app sees an internal
-`Host`. Two narrow, flag-gated accommodations:
+`Host`. Three narrow, flag-gated accommodations:
 
 - `cms/dev_settings.py` — adds the two preview origins to `CSRF_TRUSTED_ORIGINS`. Without
   it every POST (login, upload, admin) fails with "Origin checking failed" 403. Verified:
   an untrusted origin still gets 403.
+- `cms/dev_settings.py` — sets `CELERY_EMAIL_BACKEND` to the console backend. The repo's
+  default mailer targets the public `mediacms.io` SMTP server with a placeholder password,
+  so mail (new-admin welcome, invites, password resets) failed and `djcelery_email` retried
+  it forever. Mail is now printed to the worker log, through the same Celery path.
 - `frontend/webpack.config.js` — extends the dev server's host allowlist with
   `.<BASE44_SANDBOX_HOST_DOMAIN>`; the default `auto` allowlist rejects the proxied host
   with 403.
 
-With the flag unset (or any value other than `1`) both settings are untouched. This applies
+With the flag unset (or any value other than `1`) these settings are untouched. This applies
 to the repo's own `docker-compose-dev.yaml` usage too.
 
 ## Gotchas
@@ -58,10 +62,11 @@ to the repo's own `docker-compose-dev.yaml` usage too.
   a container start.
 - The compose files must never set a platform secret under `environment:`; see
   `docker-compose.base44.yml`.
-- Email: the repo default `EMAIL_HOST` is the public `mediacms.io` SMTP server, so mail
-  (invites, password reset) fails in the sandbox. Uploads, encoding, playback, login and
-  admin are unaffected. Set `EMAIL_*` (and `USE_X_ACCEL_REDIRECT=False` if not fronted by
-  nginx) for a real deployment.
+- Email: in the sandbox mail is printed to the `celery_worker` log (see the flag-gated
+  `CELERY_EMAIL_BACKEND` above) instead of being sent through the repo's default public
+  `mediacms.io` SMTP server. Uploads, encoding, playback, login and admin are unaffected.
+  Set real `EMAIL_*` values (and `USE_X_ACCEL_REDIRECT=False` if not fronted by nginx) for a
+  deployment that should actually deliver mail.
 - In dev the React bundles come from the webpack dev server, not from `static/`: no build
   step is needed after editing frontend source, but a `make build-frontend`-style production
   bundle is not what the preview shows.

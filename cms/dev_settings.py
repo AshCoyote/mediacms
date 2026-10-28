@@ -64,8 +64,17 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
 # internal host and would reject every POST (login, upload, admin) with an
 # "Origin checking failed" 403. Trust just those preview origins; with the flag
 # unset or any other value nothing changes.
-if os.environ.get("BASE44_PREVIEW_MODE") == "1" and os.environ.get("BASE44_PUBLIC_HOST_SUFFIX"):
+_preview_mode = os.environ.get("BASE44_PREVIEW_MODE") == "1"
+
+if _preview_mode and os.environ.get("BASE44_PUBLIC_HOST_SUFFIX"):
     CSRF_TRUSTED_ORIGINS = [
         f"https://3000-{os.environ['BASE44_PUBLIC_HOST_SUFFIX']}",
         f"https://8000-{os.environ['BASE44_PUBLIC_HOST_SUFFIX']}",
     ]
+
+if _preview_mode:
+    # The repo's mail settings point at the public mediacms.io SMTP server with a
+    # placeholder password, so every mail (new-admin welcome, invites, password
+    # resets) fails and djcelery_email then retries it until it gives up. Print
+    # mail to the log instead; it still goes through the same Celery email path.
+    CELERY_EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
