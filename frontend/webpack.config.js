@@ -15,6 +15,13 @@ const entry = Object.fromEntries(
     .map((file) => [path.basename(file, '.js'), path.join(entriesDir, file)])
 );
 
+// Base44 sandbox preview only (BASE44_PREVIEW_MODE=1): the preview proxy
+// forwards a Host header of "<port>-<sandbox id>.${BASE44_SANDBOX_HOST_DOMAIN}",
+// which the dev server's default host allowlist ("auto") rejects with a 403.
+// Allow exactly that domain and its subdomains; with the flag unset or any other
+// value nothing changes.
+const previewHostDomain = process.env.BASE44_PREVIEW_MODE === '1' ? process.env.BASE44_SANDBOX_HOST_DOMAIN : undefined;
+
 module.exports = (env, argv) => {
   const isProduction = argv.mode !== 'development';
   const backend = process.env.MEDIACMS_BACKEND || 'http://localhost';
@@ -94,6 +101,7 @@ module.exports = (env, argv) => {
     devServer: {
       host: '0.0.0.0',
       port: 8088,
+      ...(previewHostDomain ? { allowedHosts: [`.${previewHostDomain}`] } : {}),
       hot: false,
       liveReload: true,
       devMiddleware: {

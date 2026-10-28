@@ -1,0 +1,219 @@
+# Base44 sandbox setup for MediaCMS (development, live-reload).
+#
+# The repo's own compose files (docker-compose.yaml / docker-compose-dev.yaml) run
+# the published `mediacms/mediacms` images, so a source edit would never show up.
+# Here every app service runs FROM THE CLONED SOURCE: the repo is bind-mounted and
+# the `web` service runs Django's auto-reloading dev server, while the `frontend`
+# service runs the webpack dev server, which proxies every other request (API,
+# media, login) to Django. That gives one origin on host port 3000 for the whole
+# app, so sessions/cookies work without cross-origin setup.
+#
+# The image is built from the repo's own Dockerfile target `base` (its dev build):
+# it carries only the Python/system dependencies - the source copied into it is
+# shadowed by the bind mount, so container starts always run the current checkout.
+#
+# No external service credential is needed: postgres, redis and the admin user are
+# local, and deploy/docker/entrypoint.sh generates SECRET_KEY on first start.
+
+name: mediacms
+
+x-mediacms-app: &mediacms-app
+  image: mediacms-base44-dev:local
+  volumes:
+    - ./:/home/mediacms.io/mediacms/
+  restart: on-failure
+
+services:
+  db:
+    image: postgres:17.2-alpine
+    restart: on-failure
+    labels:
+      base44.kind: infra
+    environment:
+      POSTGRES_USER: mediacms
+      POSTGRES_PASSWORD: mediacms
+      POSTGRES_DB: mediacms
+      TZ: Europe/London
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:alpine
+    restart: on-failure
+    labels:
+      base44.kind: infra
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: migrate, load fixtures, create the admin user, collectstatic.
+  migrations:
+    <<: *mediacms-app
+    restart: "no"
+    labels:
+      base44.kind: infra
+    command: ["./deploy/docker/prestart.sh"]
+    environment:
+      DEVELOPMENT_MODE: "True"
+      ENABLE_MIGRATIONS: "yes"
+      ENABLE_UWSGI: "no"
+      ENABLE_NGINX: "no"
+      ENABLE_CELERY_BEAT: "no"
+      ENABLE_CELERY_SHORT: "no"
+      ENABLE_CELERY_LONG: "no"
+      ADMIN_USER: admin
+      ADMIN_EMAIL: admin@localhost
+      ADMIN_PASSWORD: admin
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Django dev server. Only builds the app image - the other app services reuse it.
+  web:
+    <<: *mediacms-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+      args:
+        DEVELOPMENT_MODE: "True"
+    labels:
+      base44.project: "MediaCMS API"
+      base44.kind: api
+      base44.port: "8000"
+      base44.docs: "/swagger/"
+    command: ["python", "manage.py", "runserver", "0.0.0.0:80"]
+    ports:
+      - "8000:80"
+    environment:
+      DEVELOPMENT_MODE: "True"
+      ENABLE_MIGRATIONS: "no"
+      ENABLE_UWSGI: "no"
+      ENABLE_NGINX: "no"
+      ENABLE_CELERY_BEAT: "no"
+      ENABLE_CELERY_SHORT: "no"
+      ENABLE_CELERY_LONG: "no"
+      FRONTEND_HOST: https://3000-${BASE44_PUBLIC_HOST_SUFFIX}
+      BASE44_PREVIEW_MODE:
+      BASE44_PUBLIC_HOST_SUFFIX:
+      BASE44_SANDBOX_HOST_DOMAIN:
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:80/',timeout=10).status==200 else 1)"
+          || (echo "web: Django is not responding on port 80"; exit 1)
+      interval: 15s
+      timeout: 15s
+      retries: 5
+      start_period: 180s
+
+  # Media pipeline (uploads, encoding, thumbnails, state checks). One worker on
+  # both queues instead of the image's two supervisor workers: same tasks, far
+  # fewer processes for a sandbox.
+  celery_worker:
+    <<: *mediacms-app
+    labels:
+      base44.project: "MediaCMS Worker"
+      base44.kind: worker
+    command:
+      - celery
+      - -A
+      - cms
+      - worker
+      - -l
+      - info
+      - -Q
+      - short_tasks,long_tasks
+      - -c
+      - "2"
+      - -Ofair
+      - --prefetch-multiplier=1
+    environment:
+      DEVELOPMENT_MODE: "True"
+      ENABLE_MIGRATIONS: "no"
+      ENABLE_UWSGI: "no"
+      ENABLE_NGINX: "no"
+      ENABLE_CELERY_BEAT: "no"
+      ENABLE_CELERY_SHORT: "no"
+      ENABLE_CELERY_LONG: "no"
+      FRONTEND_HOST: https://3000-${BASE44_PUBLIC_HOST_SUFFIX}
+      BASE44_PREVIEW_MODE:
+      BASE44_PUBLIC_HOST_SUFFIX:
+      BASE44_SANDBOX_HOST_DOMAIN:
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          celery -A cms inspect ping --timeout 10 >/dev/null 2>&1
+          || (echo "celery_worker: no worker replied to ping"; exit 1)
+      interval: 60s
+      timeout: 20s
+      retries: 3
+      start_period: 120s
+
+  # React client on the webpack dev server; it proxies everything else to Django,
+  # so host port 3000 serves the whole app.
+  frontend:
+    image: node:24
+    labels:
+      base44.project: "MediaCMS"
+      base44.kind: web
+      base44.port: "3000"
+    working_dir: /home/mediacms.io/mediacms/frontend/
+    volumes:
+      - ./frontend:/home/mediacms.io/mediacms/frontend/
+      # Dependencies live in a volume, so they survive restarts and are installed
+      # from the checkout on start instead of being baked into the image.
+      - frontend_node_modules:/home/mediacms.io/mediacms/frontend/node_modules
+    command:
+      - sh
+      - -ec
+      - CI=true npm install --no-package-lock && exec npm run start
+    restart: on-failure
+    env_file:
+      - ./frontend/.env
+    environment:
+      BASE44_PREVIEW_MODE:
+      BASE44_SANDBOX_HOST_DOMAIN:
+    ports:
+      - "3000:8088"
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          node -e "const http=require('http');const get=(p)=>new Promise((r)=>{const q=http.get({host:'127.0.0.1',port:8088,path:p},(x)=>{x.resume();r(x.statusCode>=200&&x.statusCode<400)});q.on('error',()=>r(false));q.setTimeout(10000,()=>{q.destroy();r(false)})});Promise.all([get('/static/js/base.js').then((ok)=>{if(!ok)console.error('frontend: webpack dev server is not serving assets');return ok}),get('/').then((ok)=>{if(!ok)console.error('backend: Django is not reachable through the dev server proxy');return ok})]).then((r)=>process.exit(r.every(Boolean)?0:1))"
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 300s
+
+volumes:
+  db_data:
+  frontend_node_modules:

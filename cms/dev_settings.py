@@ -57,3 +57,15 @@ DEBUG = True
 CORS_ORIGIN_ALLOW_ALL = True
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
+
+# Base44 sandbox preview only (BASE44_PREVIEW_MODE=1). The preview proxy
+# terminates TLS and forwards the browser's Origin header untouched, so Django
+# sees the public origin (https://<port>-<BASE44_PUBLIC_HOST_SUFFIX>) against an
+# internal host and would reject every POST (login, upload, admin) with an
+# "Origin checking failed" 403. Trust just those preview origins; with the flag
+# unset or any other value nothing changes.
+if os.environ.get("BASE44_PREVIEW_MODE") == "1" and os.environ.get("BASE44_PUBLIC_HOST_SUFFIX"):
+    CSRF_TRUSTED_ORIGINS = [
+        f"https://3000-{os.environ['BASE44_PUBLIC_HOST_SUFFIX']}",
+        f"https://8000-{os.environ['BASE44_PUBLIC_HOST_SUFFIX']}",
+    ]
