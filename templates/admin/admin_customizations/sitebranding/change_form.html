@@ -1,0 +1,93 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block after_field_sets %}
+  <fieldset class="module aligned">
+    <h2>Logo preview</h2>
+    <div class="form-row">
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+        <div>
+          <div class="help" style="margin-bottom:6px;">Logo used on the site now</div>
+          <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;padding:16px 24px;min-width:220px;text-align:center;">
+            <img src="{{ original.logo_url|default:default_logo }}" alt="Current logo" style="max-height:64px;max-width:260px;">
+          </div>
+          <p class="help" style="margin-top:6px;">
+            {% if original.logo %}{{ original.logo.name }}{% else %}Default MediaCMS logo{% endif %}
+          </p>
+        </div>
+        <div id="branding-new-logo" style="display:none;">
+          <div class="help" style="margin-bottom:6px;">New logo (not saved yet)</div>
+          <div style="background:#f8f9fa;border:1px dashed #6c757d;border-radius:6px;padding:16px 24px;min-width:220px;text-align:center;">
+            <img id="branding-new-logo-preview" alt="New logo preview" style="max-height:64px;max-width:260px;">
+          </div>
+          <p class="help" id="branding-new-logo-name" style="margin-top:6px;"></p>
+        </div>
+      </div>
+      <p class="help" id="branding-new-logo-warning" style="display:none;color:#dc3545;font-weight:600;"></p>
+      <p class="help">
+        PNG, SVG, JPG or WebP, transparent background supported, up to {{ max_logo_size_mb }} MB.
+        Pick a file in the field above to preview it, then use &ldquo;Save&rdquo; to publish it
+        everywhere the logo appears.
+      </p>
+    </div>
+  </fieldset>
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+  {{ block.super }}
+  <div class="submit-row">
+    <a href="{% url 'admin:index' %}" class="btn btn-secondary">Cancel</a>
+    {% if original.logo %}
+      <a href="{{ restore_default_url }}" class="btn btn-warning"
+         onclick="return confirm('Remove the uploaded logo and restore the default MediaCMS logo?');">
+        Restore default logo
+      </a>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block admin_change_form_document_ready %}
+{{ block.super }}
+<script>
+(function () {
+  var input = document.getElementById('id_logo');
+  if (!input) { return; }
+  var allowed = [{% for ext in allowed_logo_extensions %}"{{ ext }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
+  var maxBytes = {{ max_logo_size_bytes }};
+  var box = document.getElementById('branding-new-logo');
+  var preview = document.getElementById('branding-new-logo-preview');
+  var label = document.getElementById('branding-new-logo-name');
+  var warning = document.getElementById('branding-new-logo-warning');
+
+  function warn(message) {
+    warning.textContent = message || '';
+    warning.style.display = message ? 'block' : 'none';
+  }
+
+  input.addEventListener('change', function () {
+    var file = input.files && input.files[0];
+    warn('');
+    if (!file) {
+      box.style.display = 'none';
+      preview.removeAttribute('src');
+      label.textContent = '';
+      return;
+    }
+    var ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (allowed.indexOf(ext) === -1) {
+      box.style.display = 'none';
+      warn('Unsupported file type: .' + ext + '. Use PNG, SVG, JPG or WebP.');
+      return;
+    }
+    if (file.size > maxBytes) {
+      box.style.display = 'none';
+      warn('That image is ' + (file.size / 1048576).toFixed(1) + ' MB. The maximum is ' + (maxBytes / 1048576) + ' MB.');
+      return;
+    }
+    preview.src = URL.createObjectURL(file);
+    label.textContent = file.name + ' — ' + (file.size / 1024).toFixed(0) + ' KB (not saved yet)';
+    box.style.display = 'block';
+  });
+})();
+</script>
+{% endblock %}

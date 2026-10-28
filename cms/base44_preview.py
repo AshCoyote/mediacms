@@ -22,13 +22,17 @@ class PreviewProxyHeadersMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.public_host_suffix = os.environ.get("BASE44_PUBLIC_HOST_SUFFIX", "")
+        self.sandbox_host_domain = os.environ.get("BASE44_SANDBOX_HOST_DOMAIN", "")
 
     def __call__(self, request):
-        if self.public_host_suffix:
+        host = request.META.get("HTTP_HOST") or ""
+        # Only requests that came through the preview proxy (Host is
+        # "<port>-<sandbox id>.<sandbox domain>") are rewritten, so localhost,
+        # test and other hosts keep their own URLs.
+        if self.public_host_suffix and self.sandbox_host_domain and host.endswith("." + self.sandbox_host_domain):
             # Keep the port the request arrived on (3000 frontend proxy, 8000 Django).
-            port = (request.META.get("HTTP_HOST") or "").split("-", 1)[0]
-            if not port.isdigit():
-                port = "3000"
-            request.META["HTTP_X_FORWARDED_HOST"] = f"{port}-{self.public_host_suffix}"
-            request.META["HTTP_X_FORWARDED_PROTO"] = "https"
+            port = host.split("-", 1)[0]
+            if port.isdigit():
+                request.META["HTTP_X_FORWARDED_HOST"] = f"{port}-{self.public_host_suffix}"
+                request.META["HTTP_X_FORWARDED_PROTO"] = "https"
         return self.get_response(request)

@@ -17,6 +17,17 @@ def stuff(request):
     ret["PORTAL_LOGO_DARK_PNG"] = getattr(settings, 'PORTAL_LOGO_DARK_PNG', "")
     ret["PORTAL_LOGO_LIGHT_SVG"] = getattr(settings, 'PORTAL_LOGO_LIGHT_SVG', "")
     ret["PORTAL_LOGO_LIGHT_PNG"] = getattr(settings, 'PORTAL_LOGO_LIGHT_PNG', "")
+
+    # A logo uploaded from Admin > Site branding wins over the settings defaults.
+    from admin_customizations.models import get_branding_logo
+
+    branding_logo = get_branding_logo()
+    if branding_logo:
+        logo_url, logo_is_svg = branding_logo
+        ret["PORTAL_LOGO_DARK_PNG"] = logo_url
+        ret["PORTAL_LOGO_LIGHT_PNG"] = logo_url
+        ret["PORTAL_LOGO_DARK_SVG"] = logo_url if logo_is_svg else ""
+        ret["PORTAL_LOGO_LIGHT_SVG"] = logo_url if logo_is_svg else ""
     ret["EXTRA_CSS_PATHS"] = getattr(settings, 'EXTRA_CSS_PATHS', [])
     ret["PORTAL_DESCRIPTION"] = settings.PORTAL_DESCRIPTION
     ret["LOAD_FROM_CDN"] = settings.LOAD_FROM_CDN

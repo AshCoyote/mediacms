@@ -48,7 +48,9 @@ The preview proxy terminates TLS and forwards the browser's `Origin`
   frontend as `MediaCMS.site.api` (the browser blocked those calls as mixed content). The
   middleware supplies `X-Forwarded-Host`/`X-Forwarded-Proto` from
   `BASE44_PUBLIC_HOST_SUFFIX`, and `USE_X_FORWARDED_HOST` + `SECURE_PROXY_SSL_HEADER` take
-  over. Verified: the page's media XHRs return 200 with no console errors.
+  over. It only rewrites requests whose `Host` ends with `BASE44_SANDBOX_HOST_DOMAIN`, so
+  localhost, test (`testserver`) and any other host keeps its own URLs. Verified: the page's
+  media XHRs return 200 with no console errors, and `tests/pages/test_pages_index.py` passes.
 
 - `cms/dev_settings.py` — adds the two preview origins to `CSRF_TRUSTED_ORIGINS`. Without
   it every POST (login, upload, admin) fails with "Origin checking failed" 403. Verified:
