@@ -34,6 +34,7 @@ class MediaMetadataForm(forms.ModelForm):
             "uploaded_poster",
             "description",
             "enable_comments",
+            "media_format",
             "thumbnail_time",
         )
 
@@ -47,12 +48,14 @@ class MediaMetadataForm(forms.ModelForm):
             "friendly_token": "Slug",
             "uploaded_poster": "Poster Image",
             "thumbnail_time": "Thumbnail Time (seconds)",
+            "media_format": "Media format",
         }
         help_texts = {
             "title": "",
             "friendly_token": "Media URL slug",
             "thumbnail_time": "Select the time in seconds for the video thumbnail",
             "uploaded_poster": "Maximum file size: 5MB",
+            "media_format": "Short videos appear in the Shorts feed",
         }
 
     def __init__(self, user, *args, **kwargs):
@@ -62,6 +65,7 @@ class MediaMetadataForm(forms.ModelForm):
             self.fields.pop("friendly_token")
         if self.instance.media_type != "video":
             self.fields.pop("thumbnail_time")
+            self.fields.pop("media_format")
         if self.instance.media_type == "image":
             self.fields.pop("uploaded_poster")
 
@@ -87,6 +91,7 @@ class MediaMetadataForm(forms.ModelForm):
         self.helper.layout = Layout(*layout_fields)
 
         if self.instance.media_type == "video":
+            self.helper.layout.insert(1, CustomField('media_format'))
             self.helper.layout.append(CustomField('thumbnail_time'))
         if getattr(settings, 'ALLOW_CUSTOM_MEDIA_URLS', False):
             self.helper.layout.insert(0, CustomField('friendly_token'))

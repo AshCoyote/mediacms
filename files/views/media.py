@@ -114,6 +114,7 @@ class MediaList(APIView):
         ordering = params.get("ordering", "").strip()
         sort_by = params.get("sort_by", "").strip()
         media_type = params.get("media_type", "").strip()
+        media_format = params.get("media_format", "").strip()
         upload_date = params.get('upload_date', '').strip()
         duration = params.get('duration', '').strip()
         publish_state = params.get('publish_state', '').strip()
@@ -143,6 +144,9 @@ class MediaList(APIView):
 
         if media_type not in ["video", "image", "audio", "pdf"]:
             media_type = None
+
+        if media_format not in ["long", "short"]:
+            media_format = None
 
         gte = None
         if upload_date:
@@ -235,6 +239,17 @@ class MediaList(APIView):
 
         if media_type:
             media = media.filter(media_type=media_type)
+
+        if media_format:
+            if isinstance(media, list):
+                media = [item for item in media if item.media_format == media_format]
+            else:
+                media = media.filter(media_format=media_format)
+        elif isinstance(media, list):
+            # shorts have their own feed, keep them out of the ordinary listings
+            media = [item for item in media if item.media_format != "short"]
+        else:
+            media = media.exclude(media_format="short")
 
         if upload_date and gte:
             media = media.filter(add_date__gte=gte)

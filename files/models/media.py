@@ -28,6 +28,7 @@ from .utils import (
     EDITOR_VIDEO_RESOLUTION,
     ENCODE_RESOLUTIONS_KEYS,
     MEDIA_ENCODING_STATUS,
+    MEDIA_FORMATS,
     MEDIA_STATES,
     MEDIA_TYPES_SUPPORTED,
     PREVIEW_PROFILE_NAME,
@@ -140,6 +141,14 @@ class Media(models.Model):
         choices=MEDIA_TYPES_SUPPORTED,
         db_index=True,
         default="video",
+    )
+
+    media_format = models.CharField(
+        max_length=10,
+        choices=MEDIA_FORMATS,
+        default="long",
+        db_index=True,
+        help_text="Whether this is a regular long form video or a short",
     )
 
     password = models.CharField(max_length=100, blank=True, help_text="password for private media")

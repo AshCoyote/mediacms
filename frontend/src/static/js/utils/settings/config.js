@@ -30,6 +30,7 @@ export function config(glbl) {
     error404: glbl.url.error404,
     embed: glbl.site.url.replace(/\/+$/, '') + '/embed?m=',
     latest: glbl.url.latestMedia,
+    shorts: glbl.url.shorts,
     featured: glbl.url.featuredMedia,
     recommended: glbl.url.recommendedMedia,
     signin: glbl.url.signin,

@@ -31,6 +31,12 @@ MEDIA_TYPES_SUPPORTED = (
     ("audio", "Audio"),
 )
 
+# a video can be uploaded as a regular long form video or as a short
+MEDIA_FORMATS = (
+    ("long", "Long form"),
+    ("short", "Short"),
+)
+
 ENCODE_EXTENSIONS = (
     ("mp4", "mp4"),
     ("webm", "webm"),

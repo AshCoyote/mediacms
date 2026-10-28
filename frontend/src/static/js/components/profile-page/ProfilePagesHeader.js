@@ -401,6 +401,18 @@ class NavMenuInlineTabs extends React.PureComponent {
                             label={translateString(this.userIsAuthor ? 'Media I own' : 'Media')}
                             link={mediaLink}
                         />
+                        {!isSelectMediaMode && !inEmbeddedApp() ? (
+                            <InlineTab
+                                id="shorts"
+                                isActive={false}
+                                label={translateString('Shorts')}
+                                link={
+                                    linksConfig.shorts +
+                                    '?author=' +
+                                    encodeURIComponent((ProfilePageStore.get('author-data') || {}).username || '')
+                                }
+                            />
+                        ) : null}
                         {this.userIsAuthor ? (
                             <InlineTab
                                 id="shared_by_me"

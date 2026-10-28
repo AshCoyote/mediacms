@@ -37,6 +37,7 @@ class MediaAdmin(admin.ModelAdmin):
         "user",
         "add_date",
         "media_type",
+        "media_format",
         "duration",
         "state",
         "is_reviewed",
@@ -44,7 +45,7 @@ class MediaAdmin(admin.ModelAdmin):
         "featured",
         "get_comments_count",
     ]
-    list_filter = ["state", "is_reviewed", "encoding_status", "featured", "category"]
+    list_filter = ["state", "is_reviewed", "encoding_status", "featured", "media_format", "category"]
     ordering = ("-add_date",)
     readonly_fields = ("user", "tags", "category", "channel")
 

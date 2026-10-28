@@ -46,6 +46,13 @@ export function SidebarNavigationMenu() {
       });
     }
 
+    items.push({
+      link: links.shorts,
+      icon: 'bolt',
+      text: translateString('Shorts'),
+      className: 'nav-item-shorts',
+    });
+
     if (PageStore.get('config-enabled').pages.featured && PageStore.get('config-enabled').pages.featured.enabled) {
       items.push({
         link: links.featured,

@@ -30,6 +30,7 @@ urlpatterns = [
     re_path(r"^history$", views.history, name="history"),
     re_path(r"^liked$", views.liked_media, name="liked_media"),
     re_path(r"^latest$", views.latest_media),
+    re_path(r"^shorts$", views.shorts_media, name="shorts_media"),
     re_path(r"^members", views.members, name="members"),
     re_path(
         rf"^playlist/{friendly_token}$",

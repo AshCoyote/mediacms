@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Shorts - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+<meta property="og:title" content="Shorts - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+<meta name="twitter:card" content="summary">
+{% endblock headermeta %}
+
+{% block topimports %}
+<link href="{% static "video_js/video-js.css" %}?v={{ VERSION }}" rel="stylesheet">
+{% endblock topimports %}
+
+{% block content %}<div id="page-shorts" class="shorts-page-root"></div>{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "video_js/video-js.js" %}?v={{ VERSION }}"></script>
+<script src="{% static "js/shorts.js" %}?v={{ VERSION }}"></script>
+{% endblock bottomimports %}

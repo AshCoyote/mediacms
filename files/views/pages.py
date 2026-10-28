@@ -9,7 +9,7 @@ from django.core.mail import EmailMessage
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.utils.html import strip_tags
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 
 from cms.version import VERSION
 from files.methods import user_allowed_to_upload
@@ -654,6 +654,14 @@ def latest_media(request):
 
     context = {}
     return render(request, "cms/latest-media.html", context)
+
+
+@ensure_csrf_cookie
+def shorts_media(request):
+    """Vertical shorts feed view"""
+
+    context = {"shorts_author": request.GET.get("author", "").strip()}
+    return render(request, "cms/shorts.html", context)
 
 
 def liked_media(request):

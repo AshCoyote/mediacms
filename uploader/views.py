@@ -64,9 +64,18 @@ class FineUploaderView(generic.FormView):
             return self.make_response({"success": True})
 
         media_file = os.path.join(settings.MEDIA_ROOT, self.upload.real_path)
+        media_format = form.cleaned_data.get("media_format") or "long"
+        if media_format not in ("long", "short"):
+            media_format = "long"
+
         with open(media_file, "rb") as f:
             myfile = File(f)
-            new = Media.objects.create(media_file=myfile, user=self.request.user, title=self.upload.original_filename)
+            new = Media.objects.create(
+                media_file=myfile,
+                user=self.request.user,
+                title=self.upload.original_filename,
+                media_format=media_format,
+            )
         MediaAction.objects.create(user=self.request.user, media=new, action="watch")
 
         rm_file(media_file)
