@@ -71,6 +71,13 @@ if _preview_mode and os.environ.get("BASE44_PUBLIC_HOST_SUFFIX"):
         f"https://3000-{os.environ['BASE44_PUBLIC_HOST_SUFFIX']}",
         f"https://8000-{os.environ['BASE44_PUBLIC_HOST_SUFFIX']}",
     ]
+    # The proxy sends no X-Forwarded-* headers, so Django would build
+    # "http://<internal host>" URLs for the frontend (mixed content, wrong
+    # origin). cms/base44_preview.py supplies them from BASE44_PUBLIC_HOST_SUFFIX
+    # and Django's normal forwarded-header handling takes over.
+    MIDDLEWARE.insert(0, "cms.base44_preview.PreviewProxyHeadersMiddleware")
+    USE_X_FORWARDED_HOST = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if _preview_mode:
     # The repo's mail settings point at the public mediacms.io SMTP server with a

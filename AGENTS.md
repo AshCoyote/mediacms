@@ -40,7 +40,15 @@ Nothing here needs an external credential: postgres/redis/admin are local and
 
 The preview proxy terminates TLS and forwards the browser's `Origin`
 (`https://<port>-<BASE44_PUBLIC_HOST_SUFFIX>`) unchanged, while the app sees an internal
-`Host`. Three narrow, flag-gated accommodations:
+`Host`. Four narrow, flag-gated accommodations:
+
+- `cms/base44_preview.py` (registered from `cms/dev_settings.py`) — the proxy forwards the
+  internal `Host` and no `X-Forwarded-*` headers, so `request.build_absolute_uri()` produced
+  `http://<internal host>/...`, which `files/context_processors.py` then handed to the
+  frontend as `MediaCMS.site.api` (the browser blocked those calls as mixed content). The
+  middleware supplies `X-Forwarded-Host`/`X-Forwarded-Proto` from
+  `BASE44_PUBLIC_HOST_SUFFIX`, and `USE_X_FORWARDED_HOST` + `SECURE_PROXY_SSL_HEADER` take
+  over. Verified: the page's media XHRs return 200 with no console errors.
 
 - `cms/dev_settings.py` — adds the two preview origins to `CSRF_TRUSTED_ORIGINS`. Without
   it every POST (login, upload, admin) fails with "Origin checking failed" 403. Verified:
